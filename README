@@ -1,0 +1,5 @@
+this is a project i'm working on to make an (unrealistic) atmos/fluid simulation in lua.
+
+it's not *really* modular, and is more just a testing bench for me to write it. it might be more modular in the future if i continue working on codenvy rather than roblox.
+
+speaking of which, this was written in codenvy, not on roblox. that means that if you want this in roblox, you'll have to change the require statements and remove any os.executes i have lying around.
