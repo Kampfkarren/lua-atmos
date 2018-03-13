@@ -1,3 +1,4 @@
+local Constants = require("constants")
 local w = {"w"}
 
 --[[
@@ -275,7 +276,11 @@ local function simulate()
                 tile.tile.Gases[gas] = moles / #area.tiles
             end
             
-            tile.tile:SpreadTemperature()
+            if not area.breach then
+                tile.tile:SpreadTemperature()
+            else
+                tile.tile.Temperature = Constants.TEMPERATURE_OF_SPACE
+            end
         end
     end
     
