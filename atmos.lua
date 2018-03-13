@@ -39,8 +39,8 @@ for line in textWorld:gmatch("[^\n]+") do
             table.insert(row, Tiles.Wall.new())
         elseif char == "9" then
             local floor = Tiles.Floor.new()
-            floor.Gases.O2 = 90
-            floor.Temperature = 400
+            floor.Gases.O2 = 105
+            floor.Temperature = 250
             table.insert(row, floor)
         elseif char == "F" then
             table.insert(row, Tiles.Floor.new())
@@ -64,7 +64,7 @@ for rowNo,row in pairs(world) do
     end
 end
 
-local visualFormat = "%s:%s:%.2fC "
+local visualFormat = "%s:%s:%.2fC:%.2fkPa "
 local gasFormat = "%s,%dmol;"
 
 local function gasList(gases)
@@ -82,7 +82,7 @@ local function visuals()
         local str = ""
         
         for _,tile in pairs(row) do
-            str = str .. visualFormat:format(tile.tile:Name(), gasList(tile.tile.Gases), tile.tile.Temperature)
+            str = str .. visualFormat:format(tile.tile:Name(), gasList(tile.tile.Gases), tile.tile.Temperature, tile.tile:Pressure())
         end
         
         print(str)
@@ -115,10 +115,10 @@ local function getCols(area, pos, down)
             
             if not tile then
                 --no tile, space.
-                print("no tile")
+                --print("no tile")
                 return cols, true
             else
-                print(tile.tile.Permeable, tile.tile:Name())
+                --print(tile.tile.Permeable, tile.tile:Name())
                 if not tile.tile.Permeable then
                     --wall.
                     return cols, false
@@ -127,13 +127,13 @@ local function getCols(area, pos, down)
                 end
             end
         else
-            print("no column")
+            --print("no column")
             --no column and we're still going, meaning we went into space. breach.
             return cols, true
         end
     end
     
-    print("no column (up)")
+    --print("no column (up)")
     return cols, true
 end
 
@@ -151,21 +151,21 @@ local function checkTile(i, area)
     local breach = false
     local tile = area[i]
     
-    print("CHECKING TILE", tile[1], tile[2])
+    --print("CHECKING TILE", tile[1], tile[2])
     
     --horizontal
     for _,dir in pairs({1, -1}) do
-        print("GOING HORIZONTAL")
+        --print("GOING HORIZONTAL")
         for offset=tile[2],dir/0,dir do --wtf i love lua
             local check = world[tile[1]][offset]
             
             if check then
                 if not check.tile.Permeable then
                     --hit a wall
-                    print("HIT A WALL HORIZONTALLY AT", check.pos[1], check.pos[2])
+                    --print("HIT A WALL HORIZONTALLY AT", check.pos[1], check.pos[2])
                     break
                 else
-                    print("GOING HORIZONTALLY", check.pos[1], check.pos[2])
+                    --print("GOING HORIZONTALLY", check.pos[1], check.pos[2])
                     addIfNotExists(area, check.pos)
                 end
             else
@@ -219,7 +219,7 @@ local function simulate()
                 tiles_checked[posId] = true
                 
                 if tile.tile.Permeable then
-                    print("NEW AREA", tile.pos[1], tile.pos[2])
+                    --print("NEW AREA", tile.pos[1], tile.pos[2])
                     
                     local areaTiles = {tile.pos}
                     local i = 1
@@ -230,17 +230,20 @@ local function simulate()
                         i = i + 1
                     end
                     
-                    print("AREA FINISHED")
+                    --print("AREA FINISHED")
                     
                     if breach then
                         print("BREACH!!!")
                     end
                     
-                    for _,tile in pairs(areaTiles) do
-                        tiles_checked[table.concat(tile, ":")] = true
-                    end
-                    
                     local area = {}
+                    
+                    for _,pos in pairs(areaTiles) do
+                        tiles_checked[table.concat(pos, ":")] = true
+                        
+                        local tile = world[pos[1]][pos[2]]
+                        tile.tile.Area = area
+                    end
                     
                     area.breach = breach
                     area.tiles = areaTiles
@@ -251,7 +254,7 @@ local function simulate()
         end
     end
     
-    print("FINISHED MAKING AREAS: NUMBER OF AREAS", #areas)
+    --print("FINISHED MAKING AREAS: NUMBER OF AREAS", #areas)
     
     --spread volume
     for _,area in pairs(areas) do
@@ -269,22 +272,28 @@ local function simulate()
             end
         end
         
+        area.Volume = Constants.CELL_VOLUME * #area.tiles
+        
         for _,pos in pairs(area.tiles) do
             local tile = world[pos[1]][pos[2]]
-            
-            for gas,moles in pairs(sums) do
-                tile.tile.Gases[gas] = moles / #area.tiles
-            end
-            
+                        
             if not area.breach then
+                for gas,moles in pairs(sums) do
+                    tile.tile.Gases[gas] = moles / #area.tiles
+                end
+            
                 tile.tile:SpreadTemperature()
             else
+                for gas in pairs(tile.tile.Gases) do
+                    tile.tile.Gases[gas] = 0 --terminate all gases in space
+                end
+                
                 tile.tile.Temperature = Constants.TEMPERATURE_OF_SPACE
             end
         end
     end
     
-    print("FINISHED GAS SPREADING")
+    --print("FINISHED GAS SPREADING")
     
     visuals()
 end

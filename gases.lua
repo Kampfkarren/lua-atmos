@@ -1,7 +1,7 @@
 local Gases = {}
 
 Gases.O2 = {
-    SpecificHeat = 20;
+    SpecificHeat = 10;
 }
 
 return Gases

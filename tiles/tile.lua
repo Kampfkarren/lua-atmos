@@ -14,7 +14,7 @@ function Tile:HeatCapacity() --J/K
         heatCapacity = heatCapacity + (Gases[gas].SpecificHeat * moles)
     end
     
-    return math.max(0, heatCapacity)
+    return math.max(Constants.MINIMUM_HEAT_CAPACITY, heatCapacity)
 end
 
 --read docs/heat.md
@@ -56,6 +56,27 @@ function Tile:_CanSpread(spread, otherTile)
     return self.Temperature - spread >= potential
 end
 
+function Tile:TotalMoles()
+    local totalMoles = 0
+    
+    for _,moles in pairs(self.Gases) do
+        totalMoles = totalMoles + moles
+    end
+    
+    return totalMoles
+end
+
+--p = nRT/V, then divided by 100 for kPa
+function Tile:Pressure()
+    if not self.Permeable then return 0 end
+    if not self.Area then return 0 end
+    
+    local n = self:TotalMoles()
+    local V = self.Area.Volume
+    --print(self.Temperature, n, (n * Constants.IDEAL_GAS_CONSTANT * self.Temperature) / V)
+    return ((n * Constants.IDEAL_GAS_CONSTANT * self.Temperature) / V)
+end
+
 local Class = {}
 
 function Class.new()
@@ -66,8 +87,9 @@ function Class.new()
             O2 = 0; --Is there any reason to not have gasses be linked to areas instead of tiles?
         };
         
+        --Temperature
         Temperature = 0; --C
-        HeatFlux = 5; --C/s
+        HeatFlux = 35; --C/s
     }, {
         __index = Tile
     })
