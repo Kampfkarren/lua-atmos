@@ -1,6 +1,6 @@
 local Tile = require("tiles.tile")
 
-local Airlock = Tile.new(0)
+local Airlock = Tile.new()
 Airlock.Permeable = false
 
 function Airlock:Name()
@@ -20,22 +20,20 @@ function Airlock:Toggle()
             end
         end
         
-        local spread = self.Volume / #tiles
-        
-        for _,tile in pairs(tiles) do
-            tile.tile.Volume = tile.tile.Volume + spread
+        for gas,volume in pairs(self.Gases) do
+            for _,tile in pairs(tiles) do
+                tile.tile.Gases[gas] = tile.tile.Gases[gas] + (volume / #tiles)
+            end
+            
+            self.Gases[gas] = 0
         end
-        
-        self.Volume = 0
     end
 end
 
 local Class = {}
 
-function Class.new(volume)
-    return setmetatable({
-        Volume = volume
-    }, {
+function Class.new()
+    return setmetatable({}, {
         __index = Airlock
     })
 end

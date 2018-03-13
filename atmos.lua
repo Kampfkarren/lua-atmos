@@ -27,7 +27,7 @@ local Tiles = {
     Airlock = require("tiles.airlock")
 }
 
-local airlock
+local airlock --THIS IS TEMPORARY AND JUST FOR TESTING AREA SPREADING!!!!!
 
 --setup text world
 for line in textWorld:gmatch("[^\n]+") do
@@ -35,13 +35,16 @@ for line in textWorld:gmatch("[^\n]+") do
     
     for char in line:gmatch(".") do
         if char == "W" then
-            table.insert(row, Tiles.Wall.new(0))
+            table.insert(row, Tiles.Wall.new())
         elseif char == "9" then
-            table.insert(row, Tiles.Floor.new(90))
+            local floor = Tiles.Floor.new()
+            floor.Gases.O2 = 90
+            floor.Temperature = 400
+            table.insert(row, floor)
         elseif char == "F" then
-            table.insert(row, Tiles.Floor.new(0))
+            table.insert(row, Tiles.Floor.new())
         elseif char == "A" then
-            airlock = Tiles.Airlock.new(0)
+            airlock = Tiles.Airlock.new()
             table.insert(row, airlock)
         end
     end
@@ -60,12 +63,25 @@ for rowNo,row in pairs(world) do
     end
 end
 
+local visualFormat = "%s:%s:%.2fC "
+local gasFormat = "%s,%dmol;"
+
+local function gasList(gases)
+    local str = ""
+    
+    for name,volume in pairs(gases) do
+        str = str .. gasFormat:format(name, volume)
+    end
+    
+    return str
+end
+
 local function visuals()
     for _,row in pairs(world) do
         local str = ""
         
         for _,tile in pairs(row) do
-            str = str .. tile.tile:Name() .. ":" .. tile.tile.Volume .. " "
+            str = str .. visualFormat:format(tile.tile:Name(), gasList(tile.tile.Gases), tile.tile.Temperature)
         end
         
         print(str)
@@ -238,22 +254,28 @@ local function simulate()
     
     --spread volume
     for _,area in pairs(areas) do
-        local sum = 0
+        local sums = {
+            O2 = 0;
+        }
         
         if not area.breach then
             for _,pos in pairs(area.tiles) do
                 local tile = world[pos[1]][pos[2]]
-                sum = sum + tile.tile.Volume
+                
+                for gas,moles in pairs(tile.tile.Gases) do
+                    sums[gas] = sums[gas] + moles
+                end
             end
-            
-            print("SUM OF AREA", sum)
         end
-        
-        local spread = sum / #area.tiles
         
         for _,pos in pairs(area.tiles) do
             local tile = world[pos[1]][pos[2]]
-            tile.tile.Volume = spread
+            
+            for gas,moles in pairs(sums) do
+                tile.tile.Gases[gas] = moles / #area.tiles
+            end
+            
+            tile.tile:SpreadTemperature()
         end
     end
     
@@ -262,15 +284,40 @@ local function simulate()
     visuals()
 end
 
-simulate()
---os.execute("sleep 1")
+local clock = os.clock
+local function sleep(num)
+    local t = clock()
+    while clock() - t < num do end
+end
 
+for _=1,10 do
+    simulate()
+    sleep(0.2)
+end
+
+print("OPENING AIRLOCK")
+sleep(1)
+
+airlock:Toggle()
+
+while true do
+    sleep(0.2)
+    simulate()
+end
+
+--[[
 print("OPENING AIRLOCK")
 airlock:Toggle()
 simulate()
 
---os.execute("sleep 1")
+sleep(1)
 
 print("CLOSING AIRLOCK")
 airlock:Toggle()
 simulate()
+
+while true do
+    sleep(1)
+    simulate()
+end
+]]

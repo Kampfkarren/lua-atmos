@@ -1,6 +1,6 @@
 local Tile = require("tiles.tile")
 
-local Wall = Tile.new(0)
+local Wall = Tile.new()
 Wall.Permeable = false
 
 function Wall:Name()
@@ -9,10 +9,8 @@ end
 
 local Class = {}
 
-function Class.new(volume)
-    return setmetatable({
-        Volume = volume
-    }, {
+function Class.new()
+    return setmetatable({}, {
         __index = Wall
     })
 end
