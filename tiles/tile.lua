@@ -70,7 +70,7 @@ function Class.new()
         
         --Temperature
         Temperature = 0; --C
-        HeatFlux = 35; --C/s
+        HeatFlux = 50; --C/s
     }, {
         __index = Tile
     })
