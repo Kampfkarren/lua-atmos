@@ -37,10 +37,14 @@ function Tile:SpreadTemperature()
     end
 end
 
-function Tile:_CanSpread(spread, otherTile)
-    local amount = spread / otherTile:HeatCapacity()
-    local potential = otherTile.Temperature + (amount * otherTile:HeatCapacity())
-    return self.Temperature - spread >= potential
+function Tile:TotalMoles()
+    local totalMoles = 0
+    
+    for _,moles in pairs(self.Gases) do
+        totalMoles = totalMoles + moles
+    end
+    
+    return totalMoles
 end
 
 --p = nRT/V, then divided by 100 for kPa
