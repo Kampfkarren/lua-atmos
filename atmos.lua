@@ -40,7 +40,7 @@ for line in textWorld:gmatch("[^\n]+") do
         elseif char == "9" then
             local floor = Tiles.Floor.new()
             floor.Gases.O2 = 105
-            floor.Temperature = 250
+            floor.Temperature = 350
             table.insert(row, floor)
         elseif char == "F" then
             table.insert(row, Tiles.Floor.new())

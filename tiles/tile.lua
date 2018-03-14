@@ -23,26 +23,13 @@ function Tile:SpreadTemperature()
         tile = tile.tile
         
         if tile.Permeable and tile.Temperature < self.Temperature and (self.Temperature - tile.Temperature) > Constants.TEMPERATURE_WORTH_WORRYING then
-            local tileCapacity = tile:HeatCapacity()
-            local maxSpread = (self.Temperature / 2) * tileCapacity
-            
-            local spread
-            
-            --OH GOD I WROTE ALL THIS ON A PIECE OF PAPER AND I STILL DON'T GET IT
-            if self:_CanSpread(self.HeatFlux, tile) then
-                spread = self.HeatFlux
-            elseif self:_CanSpread(self.Temperature / 2, tile) then
-                spread = self.Temperature / 2
-            else
-                local amount = self.Temperature - ((self.Temperature + tile.Temperature) / 2)
-                
-                if self:_CanSpread(amount, tile) then
-                    spread = amount
-                else
-                    --TODO: THIS HAPPENS ALL THE TIME AND I DONT KNOW WHY!!!
-                    return
-                end
-            end
+            --[[
+            Spread is NEVER greater than heat flux.
+            To calculate how much heat a tile needs to be at equilibrium...
+            ((tileToGiveTemperature + givingTileTemperature)/2) * tileToGiveCapacity
+            ]]
+            local equilibriumTemperature = ((tile.Temperature + self.Temperature) / 2) * tile:HeatCapacity()
+            local spread = math.min(equilibriumTemperature, self:HeatCapacity())
             
             self.Temperature = self.Temperature - spread
             tile.Temperature = tile.Temperature + spread
@@ -54,16 +41,6 @@ function Tile:_CanSpread(spread, otherTile)
     local amount = spread / otherTile:HeatCapacity()
     local potential = otherTile.Temperature + (amount * otherTile:HeatCapacity())
     return self.Temperature - spread >= potential
-end
-
-function Tile:TotalMoles()
-    local totalMoles = 0
-    
-    for _,moles in pairs(self.Gases) do
-        totalMoles = totalMoles + moles
-    end
-    
-    return totalMoles
 end
 
 --p = nRT/V, then divided by 100 for kPa
