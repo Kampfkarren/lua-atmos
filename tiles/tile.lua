@@ -7,6 +7,18 @@ function Tile:Name()
     return "F"
 end
 
+function Tile:Act()
+    self:SpreadTemperature()
+    
+    if self.OnFire then
+        if self:IsCombustable() then
+            self:FireAct()
+        else
+            self.OnFire = false
+        end
+    end
+end
+
 function Tile:HeatCapacity() --J/K
     local heatCapacity = 0
     
@@ -58,6 +70,20 @@ function Tile:Pressure()
     return ((n * Constants.IDEAL_GAS_CONSTANT * self.Temperature) / V)
 end
 
+function Tile:IsCombustable()
+    return self.Fuel >= Constants.FIRE_FUEL_RATE and self.Gases.O2 >= Constants.FIRE_OXYGEN_RATE
+end
+
+function Tile:Spark()
+    if self:IsCombustable() then
+        self.OnFire = true
+    end
+end
+
+function Tile:FireAct()
+    
+end
+
 local Class = {}
 
 function Class.new()
@@ -67,6 +93,7 @@ function Class.new()
         Gases = { --Gases and their mol values
             O2 = 0; --Is there any reason to not have gasses be linked to areas instead of tiles?
         };
+        Fuel = 0; --Moles of unspecified fuel. Used for fire.
         
         --Temperature
         Temperature = 0; --C

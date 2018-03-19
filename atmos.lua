@@ -28,39 +28,44 @@ local Tiles = {
     Airlock = require("tiles.airlock")
 }
 
-local airlock --THIS IS TEMPORARY AND JUST FOR TESTING AREA SPREADING!!!!!
+local Atmos = {}
 
---setup text world
-for line in textWorld:gmatch("[^\n]+") do
-    local row = {}
-    
-    for char in line:gmatch(".") do
-        if char == "W" then
-            table.insert(row, Tiles.Wall.new())
-        elseif char == "9" then
-            local floor = Tiles.Floor.new()
-            floor.Gases.O2 = 105
-            floor.Temperature = 350
-            table.insert(row, floor)
-        elseif char == "F" then
-            table.insert(row, Tiles.Floor.new())
-        elseif char == "A" then
-            airlock = Tiles.Airlock.new()
-            table.insert(row, airlock)
+function Atmos.LoadTextWorld(textWorld)
+    for line in textWorld:gmatch("[^\n]+") do
+        local row = {}
+        
+        for char in line:gmatch(".") do
+            if char == "W" then
+                table.insert(row, Tiles.Wall.new())
+            elseif char == "9" then
+                local floor = Tiles.Floor.new()
+                floor.Gases.O2 = 105
+                floor.Temperature = 350
+                table.insert(row, floor)
+            elseif char == "F" then
+                table.insert(row, Tiles.Floor.new())
+            elseif char == "A" then
+                airlock = Tiles.Airlock.new()
+                table.insert(row, airlock)
+            end
         end
+        
+        table.insert(world, row)
     end
     
-    table.insert(world, row)
+    Atmos.TileProperties()
 end
 
-for rowNo,row in pairs(world) do
-    for colNo,tile in pairs(row) do
-        local t = {
-            pos = {rowNo, colNo},
-            tile = tile
-        }
-        
-        world[rowNo][colNo] = t
+function Atmos.TileProperties()
+    for rowNo,row in pairs(world) do
+        for colNo,tile in pairs(row) do
+            local t = {
+                pos = {rowNo, colNo},
+                tile = tile
+            }
+            
+            world[rowNo][colNo] = t
+        end
     end
 end
 
@@ -77,7 +82,7 @@ local function gasList(gases)
     return str
 end
 
-local function visuals()
+function Atmos.Visuals()
     for _,row in pairs(world) do
         local str = ""
         
@@ -88,8 +93,6 @@ local function visuals()
         print(str)
     end
 end
-
-visuals()
 
 local function getCols(area, pos, down)
     local cols = {}
@@ -189,7 +192,7 @@ local function checkTile(i, area)
     return breach
 end
 
-local function simulate()
+function Atmos.Simulate()
     --setup adjacent tiles (can we use this to change everything else? probably)
     for rowNo,row in pairs(world) do
         for colNo,tile in pairs(row) do
@@ -202,7 +205,6 @@ local function simulate()
             adjacentTiles.down = down and down[colNo]
             adjacentTiles.left = row[colNo - 1]
             adjacentTiles.right = row[colNo + 1]
-            
             tile.tile.AdjacentTiles = adjacentTiles
         end
     end
@@ -282,7 +284,7 @@ local function simulate()
                     tile.tile.Gases[gas] = moles / #area.tiles
                 end
             
-                tile.tile:SpreadTemperature()
+                tile.tile:Act()
             else
                 for gas in pairs(tile.tile.Gases) do
                     tile.tile.Gases[gas] = 0 --terminate all gases in space
@@ -295,43 +297,30 @@ local function simulate()
     
     --print("FINISHED GAS SPREADING")
     
-    visuals()
+    Atmos.Visuals()
 end
 
 local clock = os.clock
-local function sleep(num)
+function Atmos.Sleep(num)
     local t = clock()
     while clock() - t < num do end
 end
 
-for _=1,10 do
-    simulate()
-    sleep(0.2)
+function Atmos.Tick()
+    Atmos.Sleep(0.2)
+    Atmos.Simulate()
 end
 
-print("OPENING AIRLOCK")
-sleep(1)
-
-airlock:Toggle()
-
-while true do
-    sleep(0.2)
-    simulate()
+function Atmos.FindFirstOfType(name)
+    for _,row in pairs(world) do
+        for _,tile in pairs(row) do
+            if tile.tile:Name() == name then
+                return tile
+            end
+        end
+    end
 end
 
---[[
-print("OPENING AIRLOCK")
-airlock:Toggle()
-simulate()
-
-sleep(1)
-
-print("CLOSING AIRLOCK")
-airlock:Toggle()
-simulate()
-
-while true do
-    sleep(1)
-    simulate()
+if arg[1] then
+    dofile(arg[1])(Atmos)
 end
-]]

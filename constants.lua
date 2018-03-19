@@ -13,4 +13,8 @@ Constants.TIDAL_VOLUME = 0.5 --litres of air an adult human breathes in one brea
 Constants.IDEAL_GAS_CONSTANT = 8.314 --R in pV = nRT. measured in kPa*L/(K*mol)
 Constants.CELL_VOLUME = 0.3 --area volume = cell_volume * cells
 
+--fire
+Constants.FIRE_OXYGEN_RATE = 0.2 --Moles/second of oxygen in the air consumed in a fire
+Constants.FIRE_FUEL_RATE = 0.2 --Moles/second of fuel consumed in a fire
+
 return Constants
