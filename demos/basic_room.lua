@@ -1,3 +1,7 @@
+--[[
+This demo is used to test basic gas distribution, heat distribution, pressure, etc.
+]]
+
 local textWorld = 
 [[
 WWWWWWWW
